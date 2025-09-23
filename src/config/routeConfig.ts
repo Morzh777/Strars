@@ -1,0 +1,103 @@
+interface NavbarItem {
+  label: string;
+  href: string;
+}
+
+class NavigationConfig {
+  private static readonly ROUTES = {
+    HOME: "/",
+    PROFILE: "/profile",
+    RATING: "/rating",
+    PAYMENTS: "/payments",
+    LOGOUT: "/logout",
+    LOGIN: "/login",
+  } as const;
+
+  private static readonly DESCRIPTION = {
+    PROFILE: "Мой профиль",
+    RATING: "Мой рейтинг",
+    PAYMENTS: "История покупок",
+    LOGOUT: "Выход",
+    LOGIN: "Вход",
+    HOME: "Главная",
+  } as const;
+
+  private static readonly menuItems: NavbarItem[] = [
+    {
+      label: this.DESCRIPTION.PROFILE,
+      href: this.ROUTES.PROFILE,
+    },
+    {
+      label: this.DESCRIPTION.RATING,
+      href: this.ROUTES.RATING,
+    },
+    {
+      label: this.DESCRIPTION.PAYMENTS,
+      href: this.ROUTES.PAYMENTS,
+    },
+    {
+      label: this.DESCRIPTION.LOGOUT,
+      href: this.ROUTES.LOGOUT,
+    },
+    {
+      label: this.DESCRIPTION.LOGIN,
+      href: this.ROUTES.LOGIN,
+    },
+  ];
+  // Получить href главной страницы
+  static getHomeHref(): string {
+    return this.ROUTES.HOME;
+  }
+  // Получить все пункты меню
+  static getAllItems(): NavbarItem[] {
+    return this.menuItems;
+  }
+
+  // Получить пункты меню без "Выход"
+  static getMainItems(): NavbarItem[] {
+    return this.menuItems.filter((item) => item.href !== this.ROUTES.LOGOUT);
+  }
+  // без "Вход"
+  static getMainItemsWithoutLogin(): NavbarItem[] {
+    return this.menuItems.filter((item) => item.href !== this.ROUTES.LOGIN);
+  }
+  // Получить пункты меню без "Вход" и "Выход"
+  static getMainItemsWithoutLoginAndLogout(): NavbarItem[] {
+    return this.menuItems.filter((item) => item.href !== this.ROUTES.LOGIN && item.href !== this.ROUTES.LOGOUT);
+  }
+
+  // Получить только пункт "Выход"
+  static getLogoutItem(): NavbarItem | undefined {
+    return this.menuItems.find((item) => item.href === this.ROUTES.LOGOUT);
+  }
+  // Получить только пункт "Вход"
+  static getLoginItem(): NavbarItem | undefined {
+    return this.menuItems.find((item) => item.href === this.ROUTES.LOGIN);
+  }
+  // Получить первые N пунктов меню
+  static getFirstItems(count: number): NavbarItem[] {
+    return this.menuItems.slice(0, count);
+  }
+
+  // Проверить, является ли путь logout
+  static isLogoutPath(href: string): boolean {
+    return href === this.ROUTES.LOGOUT;
+  }
+
+
+  // Получить все роуты
+  static getRoutes() {
+    return this.ROUTES;
+  }
+
+  // Получить конфигурацию бренда
+  static getBrandConfig() {
+    return {
+      name: "STAR",
+      iconSize: 25,
+      iconClassName: "text-yellow-500",
+    } as const;
+  }
+}
+
+export default NavigationConfig;

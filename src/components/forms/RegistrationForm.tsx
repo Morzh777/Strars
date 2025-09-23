@@ -248,8 +248,8 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
                   size="sm"
                   className="p-0 h-auto text-sm font-medium"
                   onPress={() => {
-                    onClose?.(); // Закрываем текущую модалку
-                    onOpenLogin?.(); // Открываем модалку входа
+                    onClose?.();
+                    onOpenLogin?.(); 
                   }}
                 >
                   Войти

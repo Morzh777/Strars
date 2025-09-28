@@ -1,7 +1,18 @@
 
-import { ThemeCard, ThemeHeading, ThemePage, ThemeText } from "@/components/ui/ThemeComponents";
+import { redirect } from "next/navigation";
 
-export default function Public() {
+import { ThemeCard, ThemeHeading, ThemePage, ThemeText } from "@/components/ui/ThemeComponents";
+import { auth } from "@/lib/auth";
+
+// Серверный компонент главной страницы
+export default async function Home() {
+  // Проверяем авторизацию на сервере
+  const session = await auth();
+  
+  // Если пользователь не авторизован - редиректим на логин
+  if (!session?.user) {
+    redirect('/login');
+  }
   return (
     <ThemePage className="flex flex-col items-center justify-center min-h-screen p-8">
       <ThemeCard className="max-w-md w-full text-center space-y-6">
@@ -9,10 +20,13 @@ export default function Public() {
           STAR⭐
         </ThemeHeading>
         <ThemeText variant="secondary" className="text-lg">
-          Покажи всем свою индивидуальность
+          Добро пожаловать, {session.user.name}!
         </ThemeText>
         <ThemeText variant="muted" className="text-sm">
-          Добро пожаловать в социальную сеть нового поколения
+          Вы успешно авторизованы в социальной сети нового поколения
+        </ThemeText>
+        <ThemeText variant="muted" className="text-xs">
+          Email: {session.user.email}
         </ThemeText>
       </ThemeCard>
     </ThemePage>

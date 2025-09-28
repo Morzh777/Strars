@@ -3,8 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 import {Providers} from "@/app/providers";
-import Footer from "@/components/layout/Footer";
-import Header from "@/components/layout/Header";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +32,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (localStorage.getItem('app-theme') === 'dark' || (!localStorage.getItem('app-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                  document.documentElement.classList.add('dark')
-                } else {
+                // Темная тема по умолчанию
+                if (localStorage.getItem('app-theme') === 'light') {
                   document.documentElement.classList.remove('dark')
+                } else {
+                  document.documentElement.classList.add('dark')
                 }
               } catch (_) {}
             `,
@@ -44,13 +44,12 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-theme-main text-theme-main transition-colors duration-300`}
         suppressHydrationWarning
       >
         <Providers>
-          <Header />
           {children}
-          <Footer/>
+          <GlobalLoader />
         </Providers>
       </body>
     </html>

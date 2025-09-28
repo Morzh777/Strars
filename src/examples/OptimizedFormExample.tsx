@@ -1,24 +1,27 @@
-// Пример того, как можно упростить формы с новыми утилитами
+// Пример того, как можно упростить формы с новыми утилитами + Zustand
 
 "use client";
 
-import { useState } from "react";
 import { Button, Input, Checkbox } from "@heroui/react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 import { ThemeAlert, ThemeContainer } from "@/components/ui/ThemeComponents";
 import { useTheme } from "@/hooks/useTheme";
 import { registrationSchema, type RegistrationFormData } from "@/lib/validations";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useLoadingStore, LOADING_KEYS } from "@/stores/useLoadingStore";
 
 export default function OptimizedFormExample() {
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  // Zustand stores вместо локального состояния
+  const { registrationResult, setRegistrationResult } = useAuthStore();
+  const { setLoading, clearLoading, isLoading } = useLoadingStore();
   const { preset, cn } = useTheme();
   
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     mode: "onChange",
@@ -38,10 +41,33 @@ export default function OptimizedFormExample() {
     inputWrapper: cn(preset.input.split(" ").filter(c => c.includes("bg") || c.includes("border")).join(" "))
   };
 
+  // Получаем состояние загрузки
+  const isSubmitting = isLoading(LOADING_KEYS.AUTH_REGISTER);
+
   const onSubmit = async (data: RegistrationFormData) => {
-    // Логика отправки формы
-    console.log("Form data:", data);
-    setResult({ success: true, message: "Форма отправлена успешно!" });
+    try {
+      // Устанавливаем загрузку через Zustand
+      setLoading(LOADING_KEYS.AUTH_REGISTER, true, "Отправляем форму...");
+      setRegistrationResult(null);
+      
+      // Имитация асинхронной отправки
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      console.log("Form data:", data);
+      setRegistrationResult({ 
+        success: true, 
+        message: "Форма отправлена успешно через Zustand!" 
+      });
+    } catch (error) {
+      console.error("Form submission error:", error);
+      setRegistrationResult({ 
+        success: false, 
+        message: "Ошибка отправки формы" 
+      });
+    } finally {
+      // Очищаем загрузку
+      clearLoading(LOADING_KEYS.AUTH_REGISTER);
+    }
   };
 
   return (
@@ -124,10 +150,10 @@ export default function OptimizedFormExample() {
           {isSubmitting ? "Создание аккаунта..." : "Создать аккаунт"}
         </Button>
 
-        {/* Используем ThemeAlert вместо кастомных стилей */}
-        {result && (
-          <ThemeAlert variant={result.success ? "success" : "error"}>
-            {result.message}
+        {/* Используем ThemeAlert с Zustand состоянием */}
+        {registrationResult && (
+          <ThemeAlert variant={registrationResult.success ? "success" : "error"}>
+            {registrationResult.message}
           </ThemeAlert>
         )}
       </form>
@@ -136,12 +162,15 @@ export default function OptimizedFormExample() {
 }
 
 // СРАВНЕНИЕ:
-// ДО: 
+// ДО (useState): 
+// const [result, setResult] = useState(null);
 // className="text-sm text-gray-900 dark:text-white"
-// className="text-sm font-medium text-gray-700 dark:text-gray-300"  
-// className="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+// formState: { errors, isSubmitting }
 
-// ПОСЛЕ:
+// ПОСЛЕ (Zustand + Theme Utils):
+// const { registrationResult, setRegistrationResult } = useAuthStore();
+// const { setLoading, clearLoading, isLoading } = useLoadingStore();
 // classNames={inputClassNames} - переиспользуемый объект
-// <ThemeAlert variant="success"> - готовый компонент
+// <ThemeAlert variant="success"> - готовый компонент с Zustand
 // <ThemeContainer> - автоматические стили контейнера
+// Глобальное состояние загрузки через LOADING_KEYS

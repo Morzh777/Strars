@@ -23,6 +23,13 @@ model User {
   telegramId   String?  @unique // Telegram user ID (если привязан)
   telegramData Json?    // Дополнительные данные из Telegram (firstName, lastName, username, photoUrl, etc.)
   
+  // STARS профиль данные
+  description  String?  @default("Участник сообщества STARS")
+  tags         String?  @default("#STARS #Участник ⭐")
+  starsCount   Int?     @default(0)
+  maxStars     Int?     @default(5000)
+  globalRank   Int?
+  
   // Служебные поля
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())

@@ -7,9 +7,8 @@ import {
   NavbarMenu,
   NavbarContent,
   NavbarItem,
-  Link,
-  Button,
 } from "@heroui/react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import React from "react";
@@ -18,6 +17,10 @@ import { StarIcon } from "@/components/ui/Icon";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import UserProfile from "@/components/ui/UserProfile";
 import NavigationConfig from "@/config/routeConfig";
+import { useLoadingStore } from "@/stores/useLoadingStore";
+import { useUIStore } from "@/stores/useUIStore";
+import { clearAuthCookies } from "@/utils/cookies";
+import { useNavbarTheme } from "@/utils/theme";
 
 import AuthModal from "../modals/AuthModal";
 import RegistrationModal from "../modals/RegistrationModal";
@@ -33,33 +36,90 @@ export const BrandComponent = () => {
   const brandConfig = NavigationConfig.getBrandConfig();
   return (
     <NavbarBrand>
-      <Link className="font-bold text-inherit" href={NavigationConfig.getHomeHref()}>{brandConfig.name}</Link>
+      <Link href={NavigationConfig.getHomeHref()} className="font-bold text-inherit">
+        {brandConfig.name}
+      </Link>
       <RatingNetLogo />
     </NavbarBrand>
   );
 };
 
-export default function App() {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [isMounted, setIsMounted] = React.useState(false);
-  const [isLoginOpen, setIsLoginOpen] = React.useState(false);
-  const [isRegistrationOpen, setIsRegistrationOpen] = React.useState(false);
-  const { data: session, status } = useSession();
-  const pathName = usePathname();
+// Мемоизированный компонент для пользователя - НЕ перерендеривается при изменении меню!
+const MemoizedUserSection = React.memo(() => {
+  const { data: session, status } = useSession({
+    required: false,
+  });
+  const isGlobalLoading = useLoadingStore((state) => state.isGlobalLoading);
 
-  React.useEffect(() => {
-    setIsMounted(true);
+  const handleLogout = React.useCallback(async () => {
+    try {
+      await signOut({ redirect: false });
+      clearAuthCookies();
+      console.log("Пользователь вышел из системы, все токены очищены");
+      
+      // Обновляем страницу для редиректа на логин
+      window.location.reload();
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+      clearAuthCookies();
+      
+      // Обновляем страницу даже при ошибке
+      window.location.reload();
+    }
   }, []);
 
-  // Стили для кнопки входа
-  const loginButtonStyles = "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800";
-
-  const handleLogout = async () => {
-    await signOut({ redirect: false });
-  };
-
   const isLoggedIn = status === "authenticated" && session?.user;
-  const isLoading = status === "loading";
+  const isLoading = status === "loading" || isGlobalLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 p-2">
+        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+        <div className="flex flex-col gap-1">
+          <div className="w-16 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoggedIn && session?.user) {
+    return (
+      <UserProfile 
+        user={{
+          id: session.user.id!,
+          name: session.user.name!,
+          email: session.user.email!,
+          avatar: session.user.image || undefined,
+        }}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  return null;
+});
+
+MemoizedUserSection.displayName = 'MemoizedUserSection';
+
+
+export default function App() {
+  // Centralized navbar theme - все стили управляются из одного места!
+  const { navbarClasses, getLinkClassName, getMobileLinkClassName } = useNavbarTheme();
+  
+  // Zustand stores с оптимизированными селекторами (подписка только на нужные поля!)
+  const isMenuOpen = useUIStore((state) => state.isMenuOpen);
+  const isLoginOpen = useUIStore((state) => state.isLoginOpen);
+  const isRegistrationOpen = useUIStore((state) => state.isRegistrationOpen);
+  
+  // Функции тоже через селекторы
+  const toggleMenu = useUIStore((state) => state.toggleMenu);
+  const closeLogin = useUIStore((state) => state.closeLogin);
+  const closeRegistration = useUIStore((state) => state.closeRegistration);
+  const switchToLogin = useUIStore((state) => state.switchToLogin);
+  const switchToRegistration = useUIStore((state) => state.switchToRegistration);
+
+  const pathName = usePathname();
 
 
 
@@ -68,16 +128,8 @@ export default function App() {
       className="fixed z-50" 
       isBordered 
       isMenuOpen={isMenuOpen} 
-      onMenuOpenChange={setIsMenuOpen}
-      classNames={{
-        base: "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800",
-        wrapper: "bg-white dark:bg-gray-900",
-        content: "text-gray-900 dark:text-white",
-        brand: "text-gray-900 dark:text-white",
-        item: "text-gray-700 dark:text-gray-300",
-        toggle: "text-gray-700 dark:text-gray-300",
-        menu: "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
-      }}
+      onMenuOpenChange={toggleMenu}
+      classNames={navbarClasses}
     >
       <NavbarContent className="sm:hidden" justify="start">
         <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} />
@@ -92,37 +144,7 @@ export default function App() {
           <ThemeToggle />
         </NavbarItem>
         <NavbarItem>
-          {isLoading ? (
-            // Красивый skeleton в форме UserProfile
-            <div className="flex items-center gap-3 p-2">
-              {/* Круглый аватар skeleton */}
-              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
-              
-              {/* Текстовые линии для имени и email */}
-              <div className="flex flex-col gap-1">
-                <div className="w-16 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-              </div>
-            </div>
-          ) : isLoggedIn && session?.user ? (
-            <UserProfile 
-              user={{
-                id: session.user.id!,
-                name: session.user.name!,
-                email: session.user.email!,
-                avatar: session.user.image || undefined,
-              }}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <Button 
-              variant="bordered" 
-              onPress={() => setIsLoginOpen(true)}
-              className={loginButtonStyles}
-            >
-              {NavigationConfig.getLoginItem()?.label}
-            </Button>
-          )}
+          <MemoizedUserSection />
         </NavbarItem>
       </NavbarContent>
 
@@ -131,9 +153,12 @@ export default function App() {
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex gap-4" justify="center">
-        {NavigationConfig.getMainItemsWithoutLoginAndLogout().map((item, index) => (
+        {NavigationConfig.getMainItemsWithoutLogin().map((item, index) => (
           <NavbarItem key={`${item.label}-${index}`}>
-            <Link color={isMounted && pathName === item.href ? "primary" : "foreground"} href={item.href}>
+            <Link 
+              href={item.href}
+              className={getLinkClassName(pathName === item.href)}
+            >
               {item.label}
             </Link>
           </NavbarItem>
@@ -145,51 +170,16 @@ export default function App() {
           <ThemeToggle />
         </NavbarItem>
         <NavbarItem>
-          {isLoading ? (
-            // Красивый skeleton в форме UserProfile
-            <div className="flex items-center gap-3 p-2">
-              {/* Круглый аватар skeleton */}
-              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
-              
-              {/* Текстовые линии для имени и email */}
-              <div className="flex flex-col gap-1">
-                <div className="w-16 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-              </div>
-            </div>
-          ) : isLoggedIn && session?.user ? (
-            <UserProfile 
-              user={{
-                id: session.user.id!,
-                name: session.user.name!,
-                email: session.user.email!,
-                avatar: session.user.image || undefined,
-              }}
-              onLogout={handleLogout}
-            />
-          ) : (
-            <Button 
-              variant="bordered" 
-              onPress={() => setIsLoginOpen(true)}
-              className={loginButtonStyles}
-            >
-              Войти
-            </Button>
-          )}
+          <MemoizedUserSection />
         </NavbarItem>
       </NavbarContent>
 
       <NavbarMenu>
         {NavigationConfig.getMainItemsWithoutLogin().map((item, index) => (
           <NavbarMenuItem key={`${item.label}-${index}`}>
-            <Link
-              className="w-full"
-              color={
-                isMounted && pathName === item.href ? "primary" :
-                NavigationConfig.isLogoutPath(item.href) ? "danger" : "foreground"
-              }
+            <Link 
               href={item.href}
-              size="lg"
+              className={getMobileLinkClassName(pathName === item.href)}
             >
               {item.label}
             </Link>
@@ -198,13 +188,13 @@ export default function App() {
       </NavbarMenu>
       <AuthModal 
         isOpen={isLoginOpen} 
-        onClose={() => setIsLoginOpen(false)} 
-        onOpenRegistration={() => setIsRegistrationOpen(true)}
+        onClose={closeLogin} 
+        onOpenRegistration={switchToRegistration}
       />
        <RegistrationModal 
         isOpen={isRegistrationOpen} 
-        onClose={() => setIsRegistrationOpen(false)} 
-        onOpenLogin={() => setIsLoginOpen(true)}
+        onClose={closeRegistration} 
+        onOpenLogin={switchToLogin}
       />
     </Navbar>
   );

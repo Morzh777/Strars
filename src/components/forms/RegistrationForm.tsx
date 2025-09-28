@@ -8,12 +8,16 @@ import {
 } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 
-import { registerUser, type RegistrationResult } from "@/app/actions/auth";
+import { registerUser } from "@/app/actions/auth";
 import AuthProviders from "@/components/ui/AuthProviders";
+import { EyeSlashFilledIcon, EyeFilledIcon } from "@/components/ui/Icons";
 import { registrationSchema, type RegistrationFormData } from "@/lib/validations";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useLoadingStore, LOADING_KEYS } from "@/stores/useLoadingStore";
+import { useUIStore } from "@/stores/useUIStore";
 
 interface RegistrationFormProps {
   onClose?: () => void;
@@ -21,12 +25,29 @@ interface RegistrationFormProps {
 }
 
 export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationFormProps) {
-  const [registrationResult, setRegistrationResult] = useState<RegistrationResult | null>(null);
+  // Zustand stores
+  const { 
+    registrationResult, 
+    setRegistrationResult, 
+    isRegistrationSubmitting,
+    setRegistrationSubmitting 
+  } = useAuthStore();
+  
+  const { 
+    isRegistrationPasswordVisible, 
+    toggleRegistrationPasswordVisibility 
+  } = useUIStore();
+  
+  const { 
+    setLoading, 
+    clearLoading, 
+    isLoading 
+  } = useLoadingStore();
   
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
     mode: "onChange", // Валидация при изменении
@@ -38,12 +59,16 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
       termsAccepted: false,
     },
   });
+  
+  const isSubmitting = isRegistrationSubmitting || isLoading(LOADING_KEYS.AUTH_REGISTER);
 
 
   const onSubmit = async (data: RegistrationFormData) => {
     try {
-      // Очищаем предыдущий результат
+      // Очищаем предыдущий результат и устанавливаем загрузку
       setRegistrationResult(null);
+      setRegistrationSubmitting(true);
+      setLoading(LOADING_KEYS.AUTH_REGISTER, true, "Выполняется регистрация...");
       
       // Вызываем server action для регистрации
       const result = await registerUser({
@@ -59,6 +84,9 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
           message: "Регистрация прошла успешно! Выполняется автоматический вход...",
         });
 
+        // Обновляем статус загрузки
+        setLoading(LOADING_KEYS.AUTH_REGISTER, true, "Выполняется автоматический вход...");
+
         // Автоматически входим в систему
         const signInResult = await signIn("credentials", {
           email: data.email,
@@ -68,17 +96,16 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
 
         if (signInResult?.ok) {
           // Успешный автоматический вход
+          // Сразу закрываем модалку при успешной регистрации и входе
+          onClose?.();
+          
           setRegistrationResult({
             success: true,
             message: "Добро пожаловать! Вы успешно зарегистрированы и вошли в систему.",
           });
-          
-          // Закрываем модалку через 1.5 секунды
-          setTimeout(() => {
-            onClose?.();
-          }, 1500);
         } else {
           // Регистрация прошла, но автоматический вход не удался
+          // Закрываем модалку через 2 секунды, чтобы пользователь успел прочитать сообщение
           setRegistrationResult({
             success: true,
             message: "Регистрация прошла успешно! Войдите в систему используя свои данные.",
@@ -98,6 +125,10 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
         success: false,
         message: "Произошла неожиданная ошибка. Попробуйте позже.",
       });
+    } finally {
+      // Очищаем состояния загрузки
+      setRegistrationSubmitting(false);
+      clearLoading(LOADING_KEYS.AUTH_REGISTER);
     }
   };
 
@@ -119,21 +150,18 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
               {/* Форма регистрации */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <Input
+                  isClearable
                   label="Имя пользователя"
                   placeholder="Введите ваше имя"
                   variant="bordered"
                   isRequired
                   isInvalid={!!errors.name}
                   errorMessage={errors.name?.message}
-                  classNames={{
-                    input: "text-sm text-gray-900 dark:text-white",
-                    label: "text-sm font-medium text-gray-700 dark:text-gray-300",
-                    inputWrapper: "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                  }}
                   {...register("name")}
                 />
 
                 <Input
+                  isClearable
                   label="Email"
                   placeholder="Введите ваш email"
                   type="email"
@@ -141,43 +169,56 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
                   isRequired
                   isInvalid={!!errors.email}
                   errorMessage={errors.email?.message}
-                  classNames={{
-                    input: "text-sm text-gray-900 dark:text-white",
-                    label: "text-sm font-medium text-gray-700 dark:text-gray-300",
-                    inputWrapper: "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                  }}
                   {...register("email")}
                 />
                 
                 <Input
                   label="Пароль"
                   placeholder="Введите пароль"
-                  type="password"
                   variant="bordered"
                   isRequired
                   isInvalid={!!errors.password}
                   errorMessage={errors.password?.message}
-                  classNames={{
-                    input: "text-sm text-gray-900 dark:text-white",
-                    label: "text-sm font-medium text-gray-700 dark:text-gray-300",
-                    inputWrapper: "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                  }}
+                  endContent={
+                    <button
+                      aria-label="toggle password visibility"
+                      className="focus:outline-solid outline-transparent"
+                      type="button"
+                      onClick={toggleRegistrationPasswordVisibility}
+                    >
+                      {isRegistrationPasswordVisible ? (
+                        <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                      ) : (
+                        <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                      )}
+                    </button>
+                  }
+                  type={isRegistrationPasswordVisible ? "text" : "password"}
                   {...register("password")}
                 />
                 
                 <Input
                   label="Подтвердите пароль"
                   placeholder="Повторите пароль"
-                  type="password"
                   variant="bordered"
                   isRequired
                   isInvalid={!!errors.confirmPassword}
                   errorMessage={errors.confirmPassword?.message}
-                  classNames={{
-                    input: "text-sm text-gray-900 dark:text-white",
-                    label: "text-sm font-medium text-gray-700 dark:text-gray-300",
-                    inputWrapper: "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                  }}
+                  endContent={
+                    <button
+                      aria-label="toggle password visibility"
+                      className="focus:outline-solid outline-transparent"
+                      type="button"
+                      onClick={toggleRegistrationPasswordVisibility}
+                    >
+                      {isRegistrationPasswordVisible ? (
+                        <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                      ) : (
+                        <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                      )}
+                    </button>
+                  }
+                  type={isRegistrationPasswordVisible ? "text" : "password"}
                   {...register("confirmPassword")}
                 />
 

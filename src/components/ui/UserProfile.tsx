@@ -55,9 +55,6 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
         aria-label="Действия профиля" 
         variant="flat"
         onAction={(key) => handleAction(key as string)}
-        classNames={{
-          base: "bg-white dark:bg-gray-800 border-none shadow-lg"
-        }}
       >
         <DropdownItem key="profile" className="h-14 gap-2">
           <p className="font-semibold">Вы вошли как</p>
@@ -67,15 +64,7 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
         <DropdownItem key="settings">
           Мои настройки
         </DropdownItem>
-        
-        <DropdownItem key="dashboard">
-          Панель управления
-        </DropdownItem>
-        
-        <DropdownItem key="analytics">
-          Аналитика
-        </DropdownItem>
-        
+           
         <DropdownItem key="help">
           Помощь и поддержка
         </DropdownItem>

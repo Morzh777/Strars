@@ -45,7 +45,6 @@ export function ThemeContainer({ children, className }: BaseProps) {
  * Заголовки с автоматической темной темой
  */
 export function ThemeHeading({ children, className, level = 1 }: BaseProps & { level?: 1 | 2 | 3 | 4 | 5 | 6 }) {
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
   const sizeClasses = {
     1: "text-3xl font-bold",
     2: "text-2xl font-semibold", 
@@ -55,11 +54,17 @@ export function ThemeHeading({ children, className, level = 1 }: BaseProps & { l
     6: "text-sm font-medium"
   };
   
-  return (
-    <Tag className={cn("text-gray-900 dark:text-white", sizeClasses[level], className)}>
-      {children}
-    </Tag>
-  );
+  const baseClassName = cn("text-gray-900 dark:text-white", sizeClasses[level], className);
+  
+  switch (level) {
+    case 1: return <h1 className={baseClassName}>{children}</h1>;
+    case 2: return <h2 className={baseClassName}>{children}</h2>;
+    case 3: return <h3 className={baseClassName}>{children}</h3>;
+    case 4: return <h4 className={baseClassName}>{children}</h4>;
+    case 5: return <h5 className={baseClassName}>{children}</h5>;
+    case 6: return <h6 className={baseClassName}>{children}</h6>;
+    default: return <h1 className={baseClassName}>{children}</h1>;
+  }
 }
 
 /**
@@ -99,7 +104,7 @@ export function ThemeAlert({ children, className, variant = "info" }: BaseProps 
  */
 export function ThemeSection({ children, className }: BaseProps) {
   return (
-    <section className={cn("bg-white dark:bg-gray-900 text-gray-900 dark:text-white", className)}>
+    <section className={cn("bg-white dark:bg-[#030712] text-gray-900 dark:text-white", className)}>
       {children}
     </section>
   );

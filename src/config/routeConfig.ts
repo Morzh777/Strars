@@ -9,7 +9,6 @@ class NavigationConfig {
     PROFILE: "/profile",
     RATING: "/rating",
     PAYMENTS: "/payments",
-    LOGOUT: "/logout",
     LOGIN: "/login",
   } as const;
 
@@ -17,7 +16,6 @@ class NavigationConfig {
     PROFILE: "Мой профиль",
     RATING: "Мой рейтинг",
     PAYMENTS: "История покупок",
-    LOGOUT: "Выход",
     LOGIN: "Вход",
     HOME: "Главная",
   } as const;
@@ -36,10 +34,6 @@ class NavigationConfig {
       href: this.ROUTES.PAYMENTS,
     },
     {
-      label: this.DESCRIPTION.LOGOUT,
-      href: this.ROUTES.LOGOUT,
-    },
-    {
       label: this.DESCRIPTION.LOGIN,
       href: this.ROUTES.LOGIN,
     },
@@ -53,22 +47,9 @@ class NavigationConfig {
     return this.menuItems;
   }
 
-  // Получить пункты меню без "Выход"
-  static getMainItems(): NavbarItem[] {
-    return this.menuItems.filter((item) => item.href !== this.ROUTES.LOGOUT);
-  }
-  // без "Вход"
+  // Получить пункты меню без "Вход" 
   static getMainItemsWithoutLogin(): NavbarItem[] {
     return this.menuItems.filter((item) => item.href !== this.ROUTES.LOGIN);
-  }
-  // Получить пункты меню без "Вход" и "Выход"
-  static getMainItemsWithoutLoginAndLogout(): NavbarItem[] {
-    return this.menuItems.filter((item) => item.href !== this.ROUTES.LOGIN && item.href !== this.ROUTES.LOGOUT);
-  }
-
-  // Получить только пункт "Выход"
-  static getLogoutItem(): NavbarItem | undefined {
-    return this.menuItems.find((item) => item.href === this.ROUTES.LOGOUT);
   }
   // Получить только пункт "Вход"
   static getLoginItem(): NavbarItem | undefined {
@@ -79,10 +60,6 @@ class NavigationConfig {
     return this.menuItems.slice(0, count);
   }
 
-  // Проверить, является ли путь logout
-  static isLogoutPath(href: string): boolean {
-    return href === this.ROUTES.LOGOUT;
-  }
 
 
   // Получить все роуты

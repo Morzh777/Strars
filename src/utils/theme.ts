@@ -4,24 +4,24 @@
  * Генерирует классы для фонов с поддержкой темной темы
  */
 export const themeBackground = {
-  primary: "bg-white dark:bg-gray-900",
-  secondary: "bg-gray-50 dark:bg-gray-800", 
-  tertiary: "bg-gray-100 dark:bg-gray-700",
-  card: "bg-white dark:bg-gray-800",
-  modal: "bg-white dark:bg-gray-900",
-  input: "bg-white dark:bg-gray-800",
-  button: "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600",
-  hover: "hover:bg-gray-50 dark:hover:bg-gray-800"
+  primary: "bg-theme-main",
+  secondary: "bg-theme-secondary", 
+  tertiary: "bg-gray-100 dark:bg-gray-800",
+  card: "bg-theme-card",
+  modal: "bg-theme-main",
+  input: "bg-theme-card",
+  button: "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700",
+  hover: "hover:bg-gray-50 hover:dark:bg-theme-secondary"
 } as const;
 
 /**
  * Генерирует классы для текста с поддержкой темной темы  
  */
 export const themeText = {
-  primary: "text-gray-900 dark:text-white",
-  secondary: "text-gray-700 dark:text-gray-300", 
-  tertiary: "text-gray-600 dark:text-gray-400",
-  muted: "text-gray-500 dark:text-gray-400",
+  primary: "text-theme-main",
+  secondary: "text-theme-secondary", 
+  tertiary: "text-theme-muted",
+  muted: "text-theme-muted",
   inverse: "text-white dark:text-gray-900",
   success: "text-green-600 dark:text-green-400",
   error: "text-red-600 dark:text-red-400",
@@ -32,10 +32,10 @@ export const themeText = {
  * Генерирует классы для границ с поддержкой темной темы
  */
 export const themeBorder = {
-  primary: "border-gray-200 dark:border-gray-800",
-  secondary: "border-gray-300 dark:border-gray-600", 
-  input: "border-gray-300 dark:border-gray-600",
-  card: "border-gray-200 dark:border-gray-800",
+  primary: "border-theme-main",
+  secondary: "border-theme-secondary", 
+  input: "border-theme-secondary",
+  card: "border-theme-main",
   success: "border-green-200 dark:border-green-800",
   error: "border-red-200 dark:border-red-800"
 } as const;
@@ -59,12 +59,33 @@ export const themePresets = {
   // Навигация
   nav: `${themeBackground.primary} ${themeText.primary} ${themeBorder.primary} border-b`,
   
+  // Navbar компоненты
+  navbar: {
+    base: themeBackground.primary,
+    wrapper: themeBackground.primary,
+    content: themeText.primary,
+    brand: themeText.primary,
+    item: themeText.secondary,
+    toggle: themeText.secondary,
+    menu: `${themeBackground.primary} ${themeBorder.primary}`,
+    menuBorder: themeBorder.primary
+  },
+  
+  // Навигационные ссылки
+  navLink: {
+    active: "text-blue-600 dark:text-blue-400 hover:opacity-80",
+    inactive: "text-gray-700 dark:text-gray-300 hover:opacity-80",
+    danger: "text-red-600 dark:text-red-400 hover:opacity-80",
+    base: "relative inline-flex items-center tap-highlight-transparent outline-none transition-opacity"
+  },
+  
   // Кнопки
   button: {
     primary: "bg-blue-600 hover:bg-blue-700 text-white",
     secondary: `${themeBackground.button} ${themeText.primary}`,
     ghost: `hover:bg-gray-100 dark:hover:bg-gray-800 ${themeText.primary}`,
-    danger: "bg-red-600 hover:bg-red-700 text-white"
+    danger: "bg-red-600 hover:bg-red-700 text-white",
+    login: "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-400 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800"
   },
   
   // Уведомления/алерты
@@ -92,6 +113,45 @@ export function useThemeClasses() {
     text: themeText,
     border: themeBorder,
     preset: themePresets,
+    navbar: themePresets.navbar,
+    navLink: themePresets.navLink,
+    cn
+  };
+}
+
+/**
+ * Специальный хук для Header/Navbar - полный контроль всех стилей
+ */
+export function useNavbarTheme() {
+  return {
+    // Классы для HeroUI Navbar
+    navbarClasses: {
+      base: cn(themeBackground.primary, themeBorder.primary),
+      wrapper: themeBackground.primary,
+      content: themeText.primary,
+      brand: themeText.primary,
+      item: themeText.secondary,
+      toggle: themeText.secondary,
+      menu: cn(themeBackground.primary, themeBorder.primary)
+    },
+    
+    // Функция для получения стилей ссылки
+    getLinkClassName: (isActive: boolean) => cn(
+      themePresets.navLink.base,
+      isActive ? themePresets.navLink.active : themePresets.navLink.inactive
+    ),
+    
+    // Функция для получения стилей мобильной ссылки
+    getMobileLinkClassName: (isActive: boolean) => cn(
+      themePresets.navLink.base,
+      "w-full text-lg",
+      isActive ? themePresets.navLink.active : themePresets.navLink.inactive
+    ),
+    
+    // Стили кнопки входа
+    loginButtonClassName: themePresets.button.login,
+    
+    // Утилиты
     cn
   };
 }

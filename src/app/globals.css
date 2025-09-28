@@ -5,35 +5,41 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Light theme colors */
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ЕДИНОЕ МЕСТО ДЛЯ ВСЕХ ЦВЕТОВ */
   
-  /* Theme-aware colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-card: #ffffff;
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  --border-primary: #e5e7eb;
-  --border-secondary: #d1d5db;
+  /* Light theme colors */
+  --color-bg-main: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-card: #ffffff;
+  --color-text-main: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-border-main: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  
+  /* Устаревшие переменные для совместимости */
+  --background: var(--color-bg-main);
+  --foreground: var(--color-text-main);
+  --bg-primary: var(--color-bg-main);
+  --bg-secondary: var(--color-bg-secondary);
+  --bg-card: var(--color-bg-card);
+  --text-primary: var(--color-text-main);
+  --text-secondary: var(--color-text-secondary);
+  --text-muted: var(--color-text-muted);
+  --border-primary: var(--color-border-main);
+  --border-secondary: var(--color-border-secondary);
 }
 
 .dark {
-  /* Dark theme colors */
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  
-  /* Theme-aware colors for dark mode */
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --bg-card: #1f2937;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-muted: #9ca3af;
-  --border-primary: #374151;
-  --border-secondary: #4b5563;
+  /* ТЕМНАЯ ТЕМА - МЕНЯЙ ТОЛЬКО ЗДЕСЬ! */
+  --color-bg-main: #141414;        /* ← Главный фон (меняй тут) */
+  --color-bg-secondary: #111827;    /* ← Вторичный фон (меняй тут) */
+  --color-bg-card: #141414;         /* ← Фон карточек (меняй тут) */
+  --color-text-main: #ffffff;       /* ← Основной текст */
+  --color-text-secondary: #e5e5e5;  /* ← Вторичный текст */
+  --color-text-muted: #a3a3a3;      /* ← Приглушенный текст */
+  --color-border-main: #374151;     /* ← Основные границы */
+  --color-border-secondary: #4b5563; /* ← Вторичные границы */
 }
 
 @theme {
@@ -56,4 +62,23 @@
 /* Удаляем автоматическую темную тему из CSS, используем Tailwind классы */
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ЦЕНТРАЛИЗОВАННЫЕ CSS КЛАССЫ */
+.bg-theme-main { background-color: var(--color-bg-main) !important; }
+.bg-theme-secondary { background-color: var(--color-bg-secondary) !important; }
+.bg-theme-card { background-color: var(--color-bg-card) !important; }
+.text-theme-main { color: var(--color-text-main) !important; }
+.text-theme-secondary { color: var(--color-text-secondary) !important; }
+.text-theme-muted { color: var(--color-text-muted) !important; }
+.border-theme-main { border-color: var(--color-border-main) !important; }
+.border-theme-secondary { border-color: var(--color-border-secondary) !important; }
+
+/* Принудительное применение для body */
+html.dark body {
+  background-color: var(--color-bg-main) !important;
+}
+
+html.dark {
+  background-color: var(--color-bg-main) !important;
 }

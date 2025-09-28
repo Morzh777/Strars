@@ -7,12 +7,16 @@ import {
 } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 
 import AuthProviders from "@/components/ui/AuthProviders";
+import { EyeSlashFilledIcon, EyeFilledIcon } from "@/components/ui/Icons";
 import { ThemeAlert } from "@/components/ui/ThemeComponents";
 import { authSchema, type AuthFormData } from "@/lib/validations";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useLoadingStore, LOADING_KEYS } from "@/stores/useLoadingStore";
+import { useUIStore } from "@/stores/useUIStore";
 
 interface AuthFormProps {
   onClose?: () => void;
@@ -20,12 +24,29 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps) {
-  const [loginResult, setLoginResult] = useState<{ success: boolean; message: string } | null>(null);
+  // Zustand stores
+  const { 
+    loginResult, 
+    setLoginResult, 
+    isLoginSubmitting,
+    setLoginSubmitting
+  } = useAuthStore();
+  
+  const { 
+    isLoginPasswordVisible, 
+    toggleLoginPasswordVisibility 
+  } = useUIStore();
+  
+  const { 
+    setLoading, 
+    clearLoading, 
+    isLoading 
+  } = useLoadingStore();
   
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
     mode: "onChange",
@@ -34,10 +55,15 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
       password: "",
     },
   });
+  
+  const isSubmitting = isLoginSubmitting || isLoading(LOADING_KEYS.AUTH_LOGIN);
 
   const onSubmit = async (data: AuthFormData) => {
     try {
+      // Очищаем предыдущие результаты и устанавливаем загрузку
       setLoginResult(null);
+      setLoginSubmitting(true);
+      setLoading(LOADING_KEYS.AUTH_LOGIN, true, "Выполняется вход...");
       
       const result = await signIn("credentials", {
         email: data.login,
@@ -67,6 +93,10 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
         success: false,
         message: "Произошла ошибка при входе. Попробуйте позже.",
       });
+    } finally {
+      // Очищаем состояния загрузки
+      setLoginSubmitting(false);
+      clearLoading(LOADING_KEYS.AUTH_LOGIN);
     }
   };
 
@@ -88,33 +118,39 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
       {/* Форма входа */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
-          label="Логин или Email"
-          placeholder="Введите логин или email"
+          isClearable
+          label="Email"
+          placeholder="Введите ваш email"
+          type="email"
           variant="bordered"
           isRequired
           isInvalid={!!errors.login}
           errorMessage={errors.login?.message}
-          classNames={{
-            input: "text-sm text-gray-900 dark:text-white",
-            label: "text-sm font-medium text-gray-700 dark:text-gray-300",
-            inputWrapper: "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-          }}
           {...register("login")}
         />
         
         <Input
           label="Пароль"
           placeholder="Введите пароль"
-          type="password"
           variant="bordered"
           isRequired
           isInvalid={!!errors.password}
           errorMessage={errors.password?.message}
-          classNames={{
-            input: "text-sm text-gray-900 dark:text-white",
-            label: "text-sm font-medium text-gray-700 dark:text-gray-300",
-            inputWrapper: "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-          }}
+          endContent={
+            <button
+              aria-label="toggle password visibility"
+              className="focus:outline-solid outline-transparent"
+              type="button"
+              onClick={toggleLoginPasswordVisibility}
+            >
+              {isLoginPasswordVisible ? (
+                <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+              ) : (
+                <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+              )}
+            </button>
+          }
+          type={isLoginPasswordVisible ? "text" : "password"}
           {...register("password")}
         />
 

@@ -19,7 +19,6 @@ import UserProfile from "@/components/ui/UserProfile";
 import NavigationConfig from "@/config/routeConfig";
 import { useLoadingStore } from "@/stores/useLoadingStore";
 import { useUIStore } from "@/stores/useUIStore";
-import { clearAuthCookies } from "@/utils/cookies";
 import { useNavbarTheme } from "@/utils/theme";
 
 import AuthModal from "../modals/AuthModal";
@@ -53,15 +52,16 @@ const MemoizedUserSection = React.memo(() => {
 
   const handleLogout = React.useCallback(async () => {
     try {
-      await signOut({ redirect: false });
-      clearAuthCookies();
-      console.log("Пользователь вышел из системы, все токены очищены");
+      // NextAuth.js автоматически очищает куки при signOut
+      await signOut({ 
+        redirect: false,
+        callbackUrl: '/login' 
+      });
       
       // Обновляем страницу для редиректа на логин
       window.location.reload();
     } catch (error) {
       console.error("Ошибка при выходе:", error);
-      clearAuthCookies();
       
       // Обновляем страницу даже при ошибке
       window.location.reload();

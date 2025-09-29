@@ -1,40 +1,32 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 import AuthModal from "@/components/modals/AuthModal";
 import RegistrationModal from "@/components/modals/RegistrationModal";
 import Button from "@/components/ui/Button";
-import GlobalLoader from "@/components/ui/GlobalLoader";
 import { ThemePage } from "@/components/ui/ThemeComponents";
 import UserCard from "@/components/ui/UserCard";
-import { useLoadingStore } from "@/stores/useLoadingStore";
+import UserCardSkeleton from "@/components/ui/UserCardSkeleton";
 import { useUIStore } from "@/stores/useUIStore";
-
-import type { LoginUserCard } from "../api/login-cards/route";
-
-
-
-
+import type { UserCard as UserCardType } from "@/types/userCard";
 
 // Страница входа с описанием сайта
 export default function LoginPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [userCards, setUserCards] = useState<LoginUserCard[]>([]);
+  const [userCards, setUserCards] = useState<UserCardType[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
   
   // Получаем данные карточек из API
   useEffect(() => {
     const fetchUserCards = async () => {
       try {
         setIsLoadingCards(true);
-        const response = await fetch('/api/login-cards');
-        const cards = await response.json();
-        setUserCards(cards);
+        const response = await fetch('/api/users?limit=3&orderBy=createdAt&orderDirection=desc');
+        const result = await response.json();
+        setUserCards(result.data || result); // Поддерживаем оба формата
+        setTotalUsers(result.meta?.totalUsers || 0); // Сохраняем totalUsers
       } catch (error) {
         console.error('❌ Error fetching user cards:', error);
       } finally {
@@ -56,13 +48,7 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, [userCards.length]);
   
-  // Если пользователь уже авторизован - редиректим на главную
-  useEffect(() => {
-    if (status === "authenticated" && session) {
-      console.log("✅ User is authenticated, redirecting to home");
-      router.push("/");
-    }
-  }, [status, session, router]);
+  // Middleware уже обрабатывает редирект авторизованных пользователей
   
   const { 
     isLoginOpen, 
@@ -74,19 +60,10 @@ export default function LoginPage() {
     switchToRegistration
   } = useUIStore();
 
-  const { setGlobalLoading } = useLoadingStore();
-  
-  // Управляем глобальным лоадером
-  useEffect(() => {
-    if (status === "loading" || isLoadingCards) {
-      setGlobalLoading(true);
-    } else {
-      setGlobalLoading(false);
-    }
-  }, [status, isLoadingCards, setGlobalLoading]);
+  // Показываем скелетон пока загружаются карточки
 
   return (
-    <ThemePage className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden gap-4">
+    <ThemePage className="flex flex-col items-center justify-center min-h-screen pt-20 pb-24 px-4 overflow-hidden gap-4">
       {/* Заголовок */}
       <div className="w-full max-w-[380px] mb-2">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1">
@@ -99,7 +76,11 @@ export default function LoginPage() {
       
       {/* Слайдер карточек пользователей */}
       <div className="relative w-full max-w-[380px] h-[230px]">
-        {userCards.map((card, index) => {
+        {isLoadingCards ? (
+          // Показываем скелетон во время загрузки
+          <UserCardSkeleton className="absolute inset-0" />
+        ) : (
+          userCards.map((card, index) => {
           const offset = index - currentCardIndex;
           const isActive = index === currentCardIndex;
 
@@ -126,10 +107,11 @@ export default function LoginPage() {
                 starsCount={card.starsCount}
                 maxStars={card.maxStars}
                 globalRank={card.globalRank}
+                totalUsers={totalUsers}
               />
             </div>
           );
-        })}
+        }))}
       </div>
       
       <div className="flex flex-col gap-4 w-full max-w-[380px]">
@@ -164,7 +146,6 @@ export default function LoginPage() {
         onOpenLogin={switchToLogin}
       />
       
-      <GlobalLoader />
     </ThemePage>
   );
 }

@@ -33,15 +33,15 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
   } = useAuthStore();
   
   const { 
-    isLoginPasswordVisible, 
-    toggleLoginPasswordVisibility 
-  } = useUIStore();
-  
-  const { 
     setLoading, 
     clearLoading, 
     isLoading 
   } = useLoadingStore();
+  
+  const { 
+    isLoginPasswordVisible, 
+    toggleLoginPasswordVisibility 
+  } = useUIStore();
   
   const {
     register,
@@ -85,6 +85,8 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
         // Закрываем модалку через 1 секунду
         setTimeout(() => {
           onClose?.();
+          // Перезагружаем страницу чтобы middleware сработал
+          window.location.reload();
         }, 1000);
       }
     } catch (error) {
@@ -166,7 +168,7 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
         </div>
 
         <Button
-          color="primary"
+          color="default"
           type="submit"
           isLoading={isSubmitting}
           className="w-full"

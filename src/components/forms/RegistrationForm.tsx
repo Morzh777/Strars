@@ -30,8 +30,13 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
     registrationResult, 
     setRegistrationResult, 
     isRegistrationSubmitting,
-    setRegistrationSubmitting 
+    setRegistrationSubmitting
   } = useAuthStore();
+  
+  // Очищаем результат при открытии модалки
+  React.useEffect(() => {
+    setRegistrationResult(null);
+  }, [setRegistrationResult]);
   
   const { 
     isRegistrationPasswordVisible, 

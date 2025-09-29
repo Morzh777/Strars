@@ -9,6 +9,7 @@ interface UserCardProps {
   starsCount: number;
   maxStars: number;
   globalRank: number;
+  totalUsers: number;
 }
 
 export default function UserCard({
@@ -19,7 +20,8 @@ export default function UserCard({
   tags,
   starsCount,
   maxStars,
-  globalRank
+  globalRank,
+  totalUsers
 }: UserCardProps) {
   return (
     <Card className="max-w-[380px] w-full max-h-[90vh] overflow-hidden">
@@ -36,16 +38,8 @@ export default function UserCard({
             <h5 className="text-small tracking-tight text-default-400">@{username}</h5>
           </div>
         </div>
-        <div className="relative flex items-center justify-center">
-          <svg 
-            className="w-12 h-12 text-yellow-500 fill-current" 
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-          <span className="absolute text-sm font-bold text-black">
-            {globalRank}
-          </span>
+        <div className="text-sm font-bold text-default-600">
+          ⭐ {starsCount.toLocaleString()}
         </div>
       </CardHeader>
       
@@ -59,16 +53,23 @@ export default function UserCard({
       </CardBody>
       
       <CardFooter className="gap-3">
-        <Progress
-          className="max-w-md"
-          color="warning"
-          label="Мои звезды"
-          maxValue={maxStars}
-          showValueLabel={true}
-          size="sm"
-          value={starsCount}
-          formatOptions={{style: "decimal"}}
-        />
+        <div className="w-full">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-default-600">
+              Рейтинг
+            </span>
+            <span className="text-sm font-bold text-default-600">
+              # {globalRank.toLocaleString()}
+            </span>
+          </div>
+          <Progress
+            className="max-w-md"
+            color="warning"
+            maxValue={totalUsers}
+            size="sm"
+            value={totalUsers - globalRank + 1}
+          />
+        </div>
       </CardFooter>
     </Card>
   );

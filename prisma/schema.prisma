@@ -39,6 +39,10 @@ model User {
   accounts Account[]
   sessions Session[]
 
+  // Индексы для производительности
+  @@index([isActive, starsCount(sort: Desc), createdAt], name: "idx_user_rating")
+  @@index([starsCount(sort: Desc)], name: "idx_user_stars")
+  @@index([email], name: "idx_user_email")
   @@map("users")
 }
 

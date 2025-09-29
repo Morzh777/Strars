@@ -1,19 +1,8 @@
-
+import { UserCard } from "@/types/userCard";
 import prisma from "@/utils/prisma";
 
-export interface LoginUserCard {
-  name: string;
-  username: string;
-  avatar: string;
-  description: string;
-  tags: string;
-  starsCount: number;
-  maxStars: number;
-  globalRank: number;
-}
-
 // Мок-данные для разработки
-const mockLoginUserCards: LoginUserCard[] = [
+const mockUserCards: UserCard[] = [
   {
     name: "Наташа Рачева",
     username: "natasha_racheva",
@@ -46,10 +35,56 @@ const mockLoginUserCards: LoginUserCard[] = [
   },
 ];
 
-// Серверная функция для получения карточек пользователей
-const getLoginUserCards = async (): Promise<LoginUserCard[]> => 
-  process.env.NODE_ENV === "development" ? mockLoginUserCards : 
-  await prisma.user.findMany({ 
+// Функция для получения всех пользователей (для главной страницы)
+export const getAllUserCards = async (): Promise<UserCard[]> => {
+  if (process.env.NODE_ENV === "development") {
+    return mockUserCards;
+  }
+
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        isActive: true,
+      },
+      select: {
+        name: true,
+        email: true,
+        image: true,
+        description: true,
+        tags: true,
+        starsCount: true,
+        maxStars: true,
+        globalRank: true,
+      },
+    });
+
+    // Transform User data to UserCard format
+    const cards: UserCard[] = users.map(user => ({
+      name: user.name || 'Пользователь',
+      username: user.email?.split('@')[0] || 'user',
+      avatar: user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=3b82f6&color=fff`,
+      description: user.description || 'Участник сообщества STARS',
+      tags: user.tags || '#STARS #Участник ⭐',
+      starsCount: user.starsCount || 0,
+      maxStars: user.maxStars || 5000,
+      globalRank: user.globalRank || 0,
+    }));
+
+    return cards;
+  } catch (error) {
+    console.error('Error fetching user cards:', error);
+    return mockUserCards;
+  }
+};
+
+// Функция для получения топ-3 пользователей (для страницы логина)
+export const getLoginUserCards = async (): Promise<UserCard[]> => {
+  if (process.env.NODE_ENV === "development") {
+    return mockUserCards;
+  }
+
+  try {
+    const users = await prisma.user.findMany({ 
       take: 3, 
       orderBy: { createdAt: 'desc' }, 
       select: { 
@@ -62,8 +97,9 @@ const getLoginUserCards = async (): Promise<LoginUserCard[]> =>
         maxStars: true, 
         globalRank: true 
       } 
-    })
-    .then(users => users.map((user, index) => ({
+    });
+
+    const cards: UserCard[] = users.map((user, index) => ({
       name: user.name || 'Пользователь',
       username: user.email?.split('@')[0] || 'user',
       avatar: user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}&background=3b82f6&color=fff`,
@@ -72,15 +108,11 @@ const getLoginUserCards = async (): Promise<LoginUserCard[]> =>
       starsCount: user.starsCount || Math.floor(Math.random() * 3000) + 1000,
       maxStars: user.maxStars || 5000,
       globalRank: user.globalRank || index + 1,
-    })))
-    .catch(() => mockLoginUserCards);
+    }));
 
-export async function GET() {
-  try {
-    const cards = await getLoginUserCards();
-    return Response.json(cards);
+    return cards;
   } catch (error) {
-    console.error("❌ API Error:", error);
-    return Response.json(mockLoginUserCards);
+    console.error('Error fetching login user cards:', error);
+    return mockUserCards;
   }
-}
+};

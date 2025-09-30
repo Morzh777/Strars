@@ -1,7 +1,4 @@
-interface NavbarItem {
-  label: string;
-  href: string;
-}
+import type { NavbarItem } from '@/types/navigation';
 
 class NavigationConfig {
   private static readonly ROUTES = {
@@ -21,18 +18,6 @@ class NavigationConfig {
   } as const;
 
   private static readonly menuItems: NavbarItem[] = [
-    {
-      label: this.DESCRIPTION.PROFILE,
-      href: this.ROUTES.PROFILE,
-    },
-    {
-      label: this.DESCRIPTION.RATING,
-      href: this.ROUTES.RATING,
-    },
-    {
-      label: this.DESCRIPTION.PAYMENTS,
-      href: this.ROUTES.PAYMENTS,
-    },
     {
       label: this.DESCRIPTION.LOGIN,
       href: this.ROUTES.LOGIN,

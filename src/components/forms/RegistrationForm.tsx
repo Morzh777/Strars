@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 
 import { registerUser } from "@/app/actions/auth";
 import AuthProviders from "@/components/ui/AuthProviders";
-import { EyeSlashFilledIcon, EyeFilledIcon } from "@/components/ui/Icons";
+import { Icon } from "@/components/ui/Icon";
 import { registrationSchema, type RegistrationFormData } from "@/lib/validations";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useLoadingStore, LOADING_KEYS } from "@/stores/useLoadingStore";
@@ -192,9 +192,9 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
                       onClick={toggleRegistrationPasswordVisibility}
                     >
                       {isRegistrationPasswordVisible ? (
-                        <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        <Icon name="eyeSlash" className="text-2xl text-default-400 pointer-events-none" />
                       ) : (
-                        <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        <Icon name="eye" className="text-2xl text-default-400 pointer-events-none" />
                       )}
                     </button>
                   }
@@ -217,9 +217,9 @@ export default function RegistrationForm({ onClose, onOpenLogin }: RegistrationF
                       onClick={toggleRegistrationPasswordVisibility}
                     >
                       {isRegistrationPasswordVisible ? (
-                        <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        <Icon name="eyeSlash" className="text-2xl text-default-400 pointer-events-none" />
                       ) : (
-                        <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                        <Icon name="eye" className="text-2xl text-default-400 pointer-events-none" />
                       )}
                     </button>
                   }

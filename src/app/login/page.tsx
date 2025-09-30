@@ -9,12 +9,12 @@ import { ThemePage } from "@/components/ui/ThemeComponents";
 import UserCard from "@/components/ui/UserCard";
 import UserCardSkeleton from "@/components/ui/UserCardSkeleton";
 import { useUIStore } from "@/stores/useUIStore";
-import type { UserCard as UserCardType } from "@/types/userCard";
+import type { IUserCard } from "@/types/User. types";
 
 // Страница входа с описанием сайта
 export default function LoginPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [userCards, setUserCards] = useState<UserCardType[]>([]);
+  const [userCards, setUserCards] = useState<IUserCard[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
   

@@ -11,10 +11,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 import { StarIcon } from "@/components/ui/Icon";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 import UserProfile from "@/components/ui/UserProfile";
 import NavigationConfig from "@/config/routeConfig";
 import { useLoadingStore } from "@/stores/useLoadingStore";
@@ -43,42 +43,21 @@ export const BrandComponent = () => {
   );
 };
 
-// Мемоизированный компонент для пользователя - НЕ перерендеривается при изменении меню!
-const MemoizedUserSection = React.memo(() => {
-  const { data: session, status } = useSession({
-    required: false,
-  });
-  const isGlobalLoading = useLoadingStore((state) => state.isGlobalLoading);
+interface UserSectionProps {
+  status: "loading" | "authenticated" | "unauthenticated";
+  session: { user?: { id?: string; name?: string | null; email?: string | null; image?: string | null; starsCount?: number } } | null;
+  isGlobalLoading: boolean;
+  onLogout: () => void;
+}
 
-  const handleLogout = React.useCallback(async () => {
-    try {
-      // NextAuth.js автоматически очищает куки при signOut
-      await signOut({ 
-        redirect: false,
-        callbackUrl: '/login' 
-      });
-      
-      // Обновляем страницу для редиректа на логин
-      window.location.reload();
-    } catch (error) {
-      console.error("Ошибка при выходе:", error);
-      
-      // Обновляем страницу даже при ошибке
-      window.location.reload();
-    }
-  }, []);
-
+const UserSectionDisplay = React.memo(({ status, session, isGlobalLoading, onLogout }: UserSectionProps) => {
   const isLoggedIn = status === "authenticated" && session?.user;
   const isLoading = status === "loading" || isGlobalLoading;
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 p-2">
+      <div className="flex items-center">
         <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
-        <div className="flex flex-col gap-1">
-          <div className="w-16 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          <div className="w-12 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-        </div>
       </div>
     );
   }
@@ -89,10 +68,10 @@ const MemoizedUserSection = React.memo(() => {
         user={{
           id: session.user.id!,
           name: session.user.name!,
-          email: session.user.email!,
           avatar: session.user.image || undefined,
+          starsCount: session.user.starsCount || 0,
         }}
-        onLogout={handleLogout}
+        onLogout={onLogout}
       />
     );
   }
@@ -100,10 +79,23 @@ const MemoizedUserSection = React.memo(() => {
   return null;
 });
 
-MemoizedUserSection.displayName = 'MemoizedUserSection';
+UserSectionDisplay.displayName = 'UserSectionDisplay';
 
 
 export default function App() {
+  const { data: session, status } = useSession({ required: false });
+  const isGlobalLoading = useLoadingStore((state) => state.isGlobalLoading);
+  const router = useRouter();
+
+  const handleLogout = React.useCallback(async () => {
+    try {
+      await signOut({ redirect: false, callbackUrl: '/login' });
+      router.refresh();
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+      router.refresh();
+    }
+  }, [router]);
   // Centralized navbar theme - все стили управляются из одного места!
   const { navbarClasses, getLinkClassName, getMobileLinkClassName } = useNavbarTheme();
   
@@ -141,10 +133,7 @@ export default function App() {
 
       <NavbarContent className="sm:hidden" justify="end">
         <NavbarItem>
-          <ThemeToggle />
-        </NavbarItem>
-        <NavbarItem>
-          <MemoizedUserSection />
+          <UserSectionDisplay status={status} session={session} isGlobalLoading={isGlobalLoading} onLogout={handleLogout} />
         </NavbarItem>
       </NavbarContent>
 
@@ -167,10 +156,7 @@ export default function App() {
 
       <NavbarContent className="hidden sm:flex" justify="end">
         <NavbarItem>
-          <ThemeToggle />
-        </NavbarItem>
-        <NavbarItem>
-          <MemoizedUserSection />
+          <UserSectionDisplay status={status} session={session} isGlobalLoading={isGlobalLoading} onLogout={handleLogout} />
         </NavbarItem>
       </NavbarContent>
 

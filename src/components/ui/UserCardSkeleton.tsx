@@ -1,10 +1,7 @@
 import { Card, CardBody, CardHeader } from "@heroui/react";
 
+import type { UserCardSkeletonProps } from "@/types/User. types";
 import { cn, themePresets } from "@/utils/theme";
-
-interface UserCardSkeletonProps {
-  className?: string;
-}
 
 export default function UserCardSkeleton({ className }: UserCardSkeletonProps) {
   // Используем твою систему тем

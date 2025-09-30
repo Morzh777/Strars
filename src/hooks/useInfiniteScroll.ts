@@ -1,39 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { UserCard } from '@/types/userCard';
 
-interface UseInfiniteScrollOptions {
-  initialLimit?: number;
-  orderBy?: 'createdAt' | 'starsCount' | 'globalRank';
-  orderDirection?: 'asc' | 'desc';
-}
-
-interface UseInfiniteScrollReturn {
-  cards: UserCard[];
-  loading: boolean;
-  hasMore: boolean;
-  error: string | null;
-  totalUsers: number;
-  loadMore: () => void;
-  refresh: () => void;
-}
+import type { IInfiniteScrollOptions, IInfiniteScrollReturn } from '@/types/infiniteScroll';
+import { IUserCard } from '@/types/User. types';
 
 export function useInfiniteScroll({
   initialLimit = 25,
   orderBy = 'starsCount',
   orderDirection = 'desc'
-}: UseInfiniteScrollOptions = {}): UseInfiniteScrollReturn {
-  const [cards, setCards] = useState<UserCard[]>([]);
-  const [loading, setLoading] = useState(false);
+}: IInfiniteScrollOptions = {}): IInfiniteScrollReturn {
+  const [cards, setCards] = useState<IUserCard[]>([]);
+  const [loading, setLoading] = useState(true); // Начинаем с true для показа скелетонов
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const fetchCards = useCallback(async (currentOffset: number, isRefresh = false) => {
-    if (loading) return;
-
     setLoading(true);
     setError(null);
 
@@ -70,12 +55,15 @@ export function useInfiniteScroll({
     } finally {
       setLoading(false);
     }
-  }, [initialLimit, orderBy, orderDirection, loading]);
+  }, [initialLimit, orderBy, orderDirection]); // Убираем loading из зависимостей
 
   // Загрузка первой порции данных
   useEffect(() => {
-    fetchCards(0, true);
-  }, [orderBy, orderDirection]); // Перезагружаем при изменении сортировки
+    if (!hasInitialized) {
+      fetchCards(0, true);
+      setHasInitialized(true);
+    }
+  }, [fetchCards, hasInitialized]); // Добавляем fetchCards в зависимости
 
   const loadMore = useCallback(() => {
     if (!loading && hasMore) {

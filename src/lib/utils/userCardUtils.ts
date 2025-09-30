@@ -1,22 +1,8 @@
-import { UserCard } from "@/types/userCard";
+import { IUserCard, IGetUserCardsOptions } from "@/types/User. types";
 import prisma from "@/utils/prisma";
 
-// Интерфейс для параметров функции получения карточек
-interface GetUserCardsOptions {
-  /** Количество карточек для получения. Если не указано - все */
-  limit?: number;
-  /** Смещение для пагинации (для бесконечного скролла) */
-  offset?: number;
-  /** Сортировка */
-  orderBy?: 'createdAt' | 'starsCount' | 'globalRank';
-  /** Направление сортировки */
-  orderDirection?: 'asc' | 'desc';
-  /** Только активные пользователи */
-  activeOnly?: boolean;
-}
-
 // Универсальная функция для получения карточек пользователей
-export const getUserCards = async (options: GetUserCardsOptions = {}): Promise<{ cards: UserCard[]; totalUsers: number }> => {
+export const getUserCards = async (options: IGetUserCardsOptions = {}): Promise<{ cards: IUserCard[]; totalUsers: number }> => {
   const {
     limit,
     offset = 0,

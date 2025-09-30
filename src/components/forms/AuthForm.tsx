@@ -6,12 +6,13 @@ import {
   Divider,
 } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import React from "react";
 import { useForm } from "react-hook-form";
 
 import AuthProviders from "@/components/ui/AuthProviders";
-import { EyeSlashFilledIcon, EyeFilledIcon } from "@/components/ui/Icons";
+import { Icon } from "@/components/ui/Icon";
 import { ThemeAlert } from "@/components/ui/ThemeComponents";
 import { authSchema, type AuthFormData } from "@/lib/validations";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -42,6 +43,8 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
     isLoginPasswordVisible, 
     toggleLoginPasswordVisibility 
   } = useUIStore();
+  
+  const router = useRouter();
   
   const {
     register,
@@ -77,17 +80,9 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
           message: "Неверный email или пароль",
         });
       } else if (result?.ok) {
-        setLoginResult({
-          success: true,
-          message: "Успешный вход в систему!",
-        });
-        
-        // Закрываем модалку через 1 секунду
-        setTimeout(() => {
-          onClose?.();
-          // Перезагружаем страницу чтобы middleware сработал
-          window.location.reload();
-        }, 1000);
+        // Закрываем модалку и обновляем страницу для middleware
+        onClose?.();
+        router.refresh();
       }
     } catch (error) {
       console.error("Ошибка входа:", error);
@@ -146,9 +141,9 @@ export default function AuthForm({ onClose, onOpenRegistration }: AuthFormProps)
               onClick={toggleLoginPasswordVisibility}
             >
               {isLoginPasswordVisible ? (
-                <EyeSlashFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                <Icon name="eyeSlash" className="text-2xl text-default-400 pointer-events-none" />
               ) : (
-                <EyeFilledIcon className="text-2xl text-default-400 pointer-events-none" />
+                <Icon name="eye" className="text-2xl text-default-400 pointer-events-none" />
               )}
             </button>
           }

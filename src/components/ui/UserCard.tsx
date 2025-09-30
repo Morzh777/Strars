@@ -24,7 +24,7 @@ export default function UserCard({
   totalUsers
 }: UserCardProps) {
   return (
-    <Card className="max-w-[380px] w-full max-h-[90vh] overflow-hidden">
+    <Card className="max-w-[380px] w-full max-h-[90vh] overflow-hidden mx-auto">
       <CardHeader className="justify-between">
         <div className="flex gap-5">
           <Avatar

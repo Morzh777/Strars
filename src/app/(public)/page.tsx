@@ -34,7 +34,7 @@ export default function Home() {
 
   if (error) {
     return (
-      <ThemePage className="flex flex-col items-center justify-center min-h-screen p-8">
+      <ThemePage className="flex flex-col items-center justify-center min-h-screen pt-20 pb-24 px-4">
         <ThemeCard className="max-w-md w-full text-center space-y-6">
           <ThemeText className="text-red-500">
             ❌ Ошибка загрузки: {error}
@@ -51,18 +51,18 @@ export default function Home() {
   }
 
   return (
-    <ThemePage className="flex flex-col items-center min-h-screen pt-20 pb-24 px-8">
+    <ThemePage className="flex flex-col items-center justify-start min-h-screen pt-20 pb-24 px-4">
       <div className="w-full space-y-6">
         {/* Заголовок */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">🌟 Рейтинг STARS</h1>
+          <h1 className="text-3xl font-bold mb-2">Рейтинг STARS</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Топ участников по количеству звезд
           </p>
         </div>
 
         {/* Список карточек */}
-        <div className="max-w-md mx-auto space-y-6">
+        <div className="space-y-6">
           {cards.map((card, index) => (
             <UserCard
               key={`${card.username}-${index}`}
@@ -79,7 +79,7 @@ export default function Home() {
           ))}
 
           {/* Скелетоны во время загрузки */}
-          {loading && (
+          {loading && cards.length === 0 && (
             <>
               {Array.from({ length: 6 }).map((_, index) => (
                 <UserCardSkeleton key={`skeleton-${index}`} />
@@ -99,18 +99,8 @@ export default function Home() {
             )}
           </div>
         )}
-
-        {/* Сообщение о конце списка */}
-        {!hasMore && cards.length > 0 && (
-          <div className="text-center py-8">
-            <ThemeText className="text-gray-500">
-              🎉 Вы просмотрели всех пользователей!
-            </ThemeText>
-          </div>
-        )}
-
         {/* Пустое состояние */}
-        {!loading && cards.length === 0 && (
+        {!loading && cards.length === 0 && !error && (
           <div className="text-center py-12">
             <ThemeText className="text-gray-500">
               😔 Пользователи не найдены

@@ -67,9 +67,9 @@ const nextAuth = NextAuth({
 
           return {
             id: user.id,
-            email: user.email,
             name: user.name,
             image: user.image || undefined,
+            starsCount: user.starsCount || 0,
           };
         } catch (error) {
           console.error("Произошла ошибка при авторизации:", error);
@@ -85,14 +85,19 @@ const nextAuth = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = (user as { id: string }).id;
+        token.starsCount = (user as { starsCount?: number }).starsCount;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id as string;
-      }
+      // Only expose minimal user fields; keep default next-auth fields optional
+      session.user = {
+        id: String(token.id),
+        starsCount: (token.starsCount as number) || 0,
+        name: session.user?.name,
+        image: session.user?.image,
+      } as typeof session.user;
       return session;
     },
   },

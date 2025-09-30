@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import {Providers} from "@/app/providers";
 import GlobalLoader from "@/components/ui/GlobalLoader";
+import { auth } from "@/lib/auth";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,11 +22,12 @@ export const metadata: Metadata = {
   description: "Покажи всем свою индивидуальность",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
@@ -47,7 +50,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-theme-main text-theme-main transition-colors duration-300`}
         suppressHydrationWarning
       >
-        <Providers>
+        <Providers session={session}>
           {children}
           <GlobalLoader />
         </Providers>

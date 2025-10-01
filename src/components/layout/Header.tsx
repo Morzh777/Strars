@@ -9,9 +9,8 @@ import {
   NavbarItem,
 } from "@heroui/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import React from "react";
 
 import { StarIcon } from "@/components/ui/Icon";
@@ -69,7 +68,6 @@ const UserSectionDisplay = React.memo(({ status, session, isGlobalLoading, onLog
           id: session.user.id!,
           name: session.user.name!,
           avatar: session.user.image || undefined,
-          starsCount: session.user.starsCount || 0,
         }}
         onLogout={onLogout}
       />

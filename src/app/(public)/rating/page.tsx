@@ -1,38 +1,68 @@
+import { cookies } from 'next/headers';
+
 import { ThemeCard, ThemeHeading, ThemePage, ThemeText } from "@/components/ui/ThemeComponents";
+import type { PersonalRatingResponse } from "@/types/User. types";
 
 // Серверный компонент страницы личного рейтинга
-export default function RatingPage() {
-  // Заглушка данных текущего пользователя
-  const currentUser = {
-    name: "Текущий пользователь",
-    stars: 8750,
-    rank: 5,
-    isActive: true,
-    dailyActivity: 6,
-    weeklyActivity: 42,
-    monthlyActivity: 180,
-    totalActivity: 1250,
-    joinDate: "15 января 2024",
-    achievements: [
-      { name: "Первые шаги", description: "Получил первые 100 звезд", earned: true },
-      { name: "Активный пользователь", description: "7 дней активности подряд", earned: true },
-      { name: "Звездный охотник", description: "Собрал 1000 звезд", earned: true },
-      { name: "Мастер активности", description: "30 дней активности подряд", earned: false },
-      { name: "Легенда", description: "Собрал 10000 звезд", earned: false },
-    ]
-  };
+export default async function RatingPage() {
+  // Получаем реальные данные рейтинга пользователя
+  let ratingData: PersonalRatingResponse | null = null;
+  
+  try {
+    const cookieStore = cookies();
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/rating`, {
+      headers: {
+        'Cookie': cookieStore.toString()
+      }
+    });
+    
+    if (response.ok) {
+      ratingData = await response.json();
+    }
+  } catch (error) {
+    console.error('Error fetching rating data:', error);
+  }
+
+  // Если не удалось загрузить данные, показываем заглушку
+  if (!ratingData) {
+    return (
+      <ThemePage className="min-h-screen p-4 pt-16">
+        <div className="max-w-4xl mx-auto">
+          <ThemeCard className="p-8 text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <ThemeHeading level={1} className="text-2xl mb-4">
+              Не удалось загрузить данные рейтинга
+            </ThemeHeading>
+            <ThemeText variant="secondary">
+              Попробуйте обновить страницу или войти в систему заново
+            </ThemeText>
+          </ThemeCard>
+        </div>
+      </ThemePage>
+    );
+  }
+
+  const currentUser = ratingData.profile;
 
   return (
-    <ThemePage className="min-h-screen p-8 pt-24">
+    <ThemePage className="min-h-screen p-4 pt-16">
       <div className="max-w-4xl mx-auto">
-        <ThemeHeading level={1} className="text-4xl mb-8 text-center">
+        <ThemeHeading level={1} className="text-4xl mb-4 text-center">
           🏆 Мой рейтинг
         </ThemeHeading>
         
-        <ThemeText variant="secondary" className="text-center mb-8 max-w-2xl mx-auto">
-          Ваш личный рейтинг и статистика активности. 
-          Получайте звезды за ежедневную активность и выполнение заданий.
-        </ThemeText>
+        <div className="text-center mb-8">
+          <ThemeText variant="secondary" className="max-w-2xl mx-auto mb-4">
+            Ваш личный рейтинг и статистика активности. 
+            Получайте звезды за ежедневную активность и выполнение заданий.
+          </ThemeText>
+          
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+            <span className="text-blue-600 dark:text-blue-400 font-semibold">
+              Место #{ratingData.globalRank} из {ratingData.totalUsers.toLocaleString()}
+            </span>
+          </div>
+        </div>
 
         {/* Основная информация пользователя */}
         <ThemeCard className="p-8 mb-8">
@@ -78,15 +108,22 @@ export default function RatingPage() {
             <div className="flex justify-between items-center mb-2">
               <ThemeText className="font-semibold">⭐ Звезды</ThemeText>
               <ThemeText variant="muted">
-                {currentUser.stars.toLocaleString()} / 10,000
+                {currentUser.stars.toLocaleString()} {currentUser.nextRankStars ? `(+${currentUser.nextRankStars} до следующего уровня)` : ''}
               </ThemeText>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
               <div 
                 className="h-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
-                style={{ width: `${(currentUser.stars / 10000) * 100}%` }}
+                style={{ width: `${Math.min(100, currentUser.rankProgress || 0)}%` }}
               ></div>
             </div>
+            {currentUser.rankProgress && (
+              <div className="text-center mt-2">
+                <ThemeText variant="muted" className="text-sm">
+                  Прогресс до следующего уровня: {Math.round(currentUser.rankProgress)}%
+                </ThemeText>
+              </div>
+            )}
           </div>
         </ThemeCard>
 
@@ -95,7 +132,7 @@ export default function RatingPage() {
           <ThemeCard className="p-6 text-center">
             <div className="text-3xl mb-2">🔥</div>
             <ThemeHeading level={2} className="text-2xl mb-1">
-              {currentUser.dailyActivity}
+              {currentUser.activityStats.daily}
             </ThemeHeading>
             <ThemeText variant="secondary">Сегодня</ThemeText>
           </ThemeCard>
@@ -103,7 +140,7 @@ export default function RatingPage() {
           <ThemeCard className="p-6 text-center">
             <div className="text-3xl mb-2">📅</div>
             <ThemeHeading level={2} className="text-2xl mb-1">
-              {currentUser.weeklyActivity}
+              {currentUser.activityStats.weekly}
             </ThemeHeading>
             <ThemeText variant="secondary">За неделю</ThemeText>
           </ThemeCard>
@@ -111,7 +148,7 @@ export default function RatingPage() {
           <ThemeCard className="p-6 text-center">
             <div className="text-3xl mb-2">📊</div>
             <ThemeHeading level={2} className="text-2xl mb-1">
-              {currentUser.monthlyActivity}
+              {currentUser.activityStats.monthly}
             </ThemeHeading>
             <ThemeText variant="secondary">За месяц</ThemeText>
           </ThemeCard>
@@ -125,6 +162,38 @@ export default function RatingPage() {
           </ThemeCard>
         </div>
 
+        {/* Серии активности */}
+        <ThemeCard className="p-6 mb-8">
+          <ThemeHeading level={2} className="text-xl mb-4 flex items-center gap-2">
+            <span>🔥</span>
+            Серии активности
+          </ThemeHeading>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🔥</div>
+              <ThemeHeading level={3} className="text-2xl mb-1">
+                {currentUser.activityStats.streak}
+              </ThemeHeading>
+              <ThemeText variant="secondary">Текущая серия</ThemeText>
+              <ThemeText variant="muted" className="text-sm mt-1">
+                дней подряд
+              </ThemeText>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl mb-2">🏆</div>
+              <ThemeHeading level={3} className="text-2xl mb-1">
+                {currentUser.activityStats.longestStreak}
+              </ThemeHeading>
+              <ThemeText variant="secondary">Лучшая серия</ThemeText>
+              <ThemeText variant="muted" className="text-sm mt-1">
+                дней подряд
+              </ThemeText>
+            </div>
+          </div>
+        </ThemeCard>
+
         {/* Достижения */}
         <ThemeCard className="p-6 mb-8">
           <ThemeHeading level={2} className="text-2xl mb-6 flex items-center gap-2">
@@ -133,9 +202,9 @@ export default function RatingPage() {
           </ThemeHeading>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {currentUser.achievements.map((achievement, index) => (
+            {currentUser.achievements.map((achievement) => (
               <div 
-                key={index} 
+                key={achievement.id} 
                 className={`p-4 rounded-lg border transition-all ${
                   achievement.earned 
                     ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' 
@@ -144,7 +213,7 @@ export default function RatingPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className={`text-2xl ${achievement.earned ? '' : 'opacity-30'}`}>
-                    {achievement.earned ? '🏆' : '🔒'}
+                    {achievement.earned ? achievement.icon : '🔒'}
                   </div>
                   
                   <div className="flex-grow">
@@ -154,13 +223,41 @@ export default function RatingPage() {
                     <ThemeText variant="muted" className="text-sm">
                       {achievement.description}
                     </ThemeText>
+                    
+                    {/* Прогресс для незавершенных достижений */}
+                    {!achievement.earned && achievement.progress !== undefined && (
+                      <div className="mt-2">
+                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <span>Прогресс</span>
+                          <span>{achievement.progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="h-2 rounded-full bg-blue-500 transition-all duration-300"
+                            style={{ width: `${achievement.progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
-                  {achievement.earned && (
-                    <div className="text-green-500 text-sm font-semibold">
-                      ✓ Получено
-                    </div>
-                  )}
+                  <div className="text-right">
+                    {achievement.earned ? (
+                      <div className="text-green-500 text-sm font-semibold">
+                        ✓ Получено
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-sm">
+                        🔒 Заблокировано
+                      </div>
+                    )}
+                    
+                    {achievement.reward && (
+                      <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                        +{achievement.reward} ⭐
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

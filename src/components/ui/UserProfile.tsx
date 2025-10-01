@@ -93,7 +93,6 @@ export default function UserProfile({ user, onLogout }: UserProfileProps) {
           <DropdownItem key="profile" isReadOnly className="h-14 gap-2 opacity-100">
             <div>
               <p className="font-semibold text-default-600">{user.name}</p>
-              <p className="text-yellow-500 font-semibold">⭐ {(user.starsCount || 0).toLocaleString()}</p>
             </div>
           </DropdownItem>
           <DropdownItem key="rating">

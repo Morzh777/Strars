@@ -3,7 +3,7 @@ import { ThemeCard, ThemeHeading, ThemePage, ThemeText } from "@/components/ui/T
 // Серверный компонент страницы истории покупок
 export default function PaymentsPage() {
   return (
-    <ThemePage className="min-h-screen p-8 pt-24">
+    <ThemePage className="min-h-screen p-4 pt-16">
       <div className="max-w-4xl mx-auto">
         <ThemeHeading level={1} className="text-3xl mb-8 text-center">
           📊 История покупок
